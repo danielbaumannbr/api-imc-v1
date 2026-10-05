@@ -3,6 +3,24 @@ const db = require('./db')
 const app = express()
 const port = 3000
 app.use(express.json())
+
+//Função para calcular o imc
+function calcularIMC(peso,altura){
+    const resultado = peso/(altura*altura);
+    const imc = parseFloat(resultado.toFixed(2));
+    let status="";
+    if(imc<18.5){
+        status="Abaixo do peso normal";
+    }else if(imc<25){
+         status="Peso normal";
+    
+    }else if(imc<30){
+         status="Excesso de Peso";
+    }else{
+         status="Obesidade";
+    }
+    return {imc,status}
+}
 app.get('/', (req, res) => {
     res.send('Hello World!')
 })
@@ -35,7 +53,35 @@ app.get('/paciente/:id', async (req, res) => {
         });
     }
 })
+app.post('/paciente',async(req,res)=>{
+    const {nome,idade,altura,peso}=req.body;
+    if(!nome||!idade||!altura||!peso){
+        res.status(400).json({
+            mensagem: " Solicitação Inválida!",
+            detalhes: error.message
+        });
+    }
+    const {imc,status}=calcularIMC(Number(peso),Number(altura));
+    try {
+        const [resultado] = await db.execute("INSERT INTO pacientes (nome, idade, altura, peso, imc, status) VALUES (?,?,?,?,?,?);", [nome,idade,altura,peso,imc,status]);
+        res.status(201).json({
+            id:resultado.insertId,
+            nome,
+            idade,
+            altura,
+            peso,
+            imc,
+            status
 
+        })
+    } catch (error) {
+         res.status(500).json({
+            mensagem: "Erro interno do servidor!",
+            detalhes: error.message
+        });
+    }
+
+})
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
