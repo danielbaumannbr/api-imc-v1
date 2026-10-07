@@ -1,10 +1,11 @@
 const express = require('express');
-const db = require('./db')
-const app = express()
-const port = 3000
-app.use(express.json())
+const db = require('./db');
+const app = express();
+const port = 3000;
 
-//Função para calcular o imc
+app.use(express.json());
+
+// Função para calcular o imc
 function calcularIMC(peso, altura) {
     const resultado = peso / (altura * altura);
     const imc = parseFloat(resultado.toFixed(2));
@@ -13,20 +14,22 @@ function calcularIMC(peso, altura) {
         status = "Abaixo do peso normal";
     } else if (imc < 25) {
         status = "Peso normal";
-
     } else if (imc < 30) {
         status = "Excesso de Peso";
     } else {
         status = "Obesidade";
     }
-    return { imc, status }
+    return { imc, status };
 }
+
 app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
+    res.send('Hello World!');
+});
+
 app.get('/teste2', (req, res) => {
-    res.send('Isto é um teste')
-})
+    res.send('Isto é um teste');
+});
+
 app.get('/prontuarios', async (req, res) => {
     try {
         const [rows] = await db.execute("SELECT * FROM pacientes");
@@ -37,7 +40,8 @@ app.get('/prontuarios', async (req, res) => {
             detalhes: error.message
         });
     }
-})
+});
+
 app.get('/paciente/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -52,13 +56,18 @@ app.get('/paciente/:id', async (req, res) => {
             detalhes: error.message
         });
     }
-})
+});
+
 app.post('/paciente', async (req, res) => {
     const { nome, idade, altura, peso } = req.body;
     if (!nome || !idade || !altura || !peso) {
-        res.status(400).json({
-            mensagem: " Solicitação Inválida!",
-            detalhes: error.message
+        // ---------------------------------------------------------------------
+        // ALTERAÇÃO 1: Adicionado 'return' para parar a execução e removido 
+        // 'error.message' (que causava ReferenceError por não estar em um catch)
+        // ---------------------------------------------------------------------
+        return res.status(400).json({
+            mensagem: "Solicitação Inválida!",
+            detalhes: "Todos os campos (nome, idade, altura, peso) são obrigatórios."
         });
     }
     const { imc, status } = calcularIMC(Number(peso), Number(altura));
@@ -72,23 +81,25 @@ app.post('/paciente', async (req, res) => {
             peso,
             imc,
             status
-
-        })
+        });
     } catch (error) {
         res.status(500).json({
             mensagem: "Erro interno do servidor!",
             detalhes: error.message
         });
     }
+});
 
-})
 app.put('/paciente/:id', async (req, res) => {
     const { id } = req.params;
     const { nome, idade, altura, peso } = req.body;
     if (!nome || !idade || !altura || !peso) {
-        res.status(400).json({
-            mensagem: " Solicitação Inválida!",
-            detalhes: error.message
+        // ---------------------------------------------------------------------
+        // ALTERAÇÃO 2: Adicionado 'return' e ajustada a propriedade 'detalhes'
+        // ---------------------------------------------------------------------
+        return res.status(400).json({
+            mensagem: "Solicitação Inválida!",
+            detalhes: "Todos os campos (nome, idade, altura, peso) são obrigatórios."
         });
     }
     const { imc, status } = calcularIMC(Number(peso), Number(altura));
@@ -97,15 +108,15 @@ app.put('/paciente/:id', async (req, res) => {
         if (resultado.affectedRows === 0) {
             return res.status(404).json({ mensagem: "Paciente não encontrado!" });
         }
-        res.status(200).json({ mensagem: "Paciente atualizado com sucesso." })
+        res.status(200).json({ mensagem: "Paciente atualizado com sucesso." });
     } catch (error) {
         res.status(500).json({
             mensagem: "Erro interno do servidor!",
             detalhes: error.message
         });
     }
+});
 
-})
 app.delete('/paciente/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -120,7 +131,19 @@ app.delete('/paciente/:id', async (req, res) => {
             detalhes: error.message
         });
     }
-})
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
+});
+
+// ---------------------------------------------------------------------
+// ALTERAÇÃO 3: Envolver a escuta da porta em uma verificação de ambiente
+// para não prender o servidor durante a execução dos testes
+// ---------------------------------------------------------------------
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`);
+    });
+}
+
+// ---------------------------------------------------------------------
+// ALTERAÇÃO 4: Exportação da instância do Express para import no Jest/Supertest
+// ---------------------------------------------------------------------
+module.exports = app;
