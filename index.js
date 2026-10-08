@@ -61,10 +61,7 @@ app.get('/paciente/:id', async (req, res) => {
 app.post('/paciente', async (req, res) => {
     const { nome, idade, altura, peso } = req.body;
     if (!nome || !idade || !altura || !peso) {
-        // ---------------------------------------------------------------------
-        // ALTERAÇÃO 1: Adicionado 'return' para parar a execução e removido 
-        // 'error.message' (que causava ReferenceError por não estar em um catch)
-        // ---------------------------------------------------------------------
+      
         return res.status(400).json({
             mensagem: "Solicitação Inválida!",
             detalhes: "Todos os campos (nome, idade, altura, peso) são obrigatórios."
@@ -94,9 +91,7 @@ app.put('/paciente/:id', async (req, res) => {
     const { id } = req.params;
     const { nome, idade, altura, peso } = req.body;
     if (!nome || !idade || !altura || !peso) {
-        // ---------------------------------------------------------------------
-        // ALTERAÇÃO 2: Adicionado 'return' e ajustada a propriedade 'detalhes'
-        // ---------------------------------------------------------------------
+   
         return res.status(400).json({
             mensagem: "Solicitação Inválida!",
             detalhes: "Todos os campos (nome, idade, altura, peso) são obrigatórios."
@@ -134,7 +129,7 @@ app.delete('/paciente/:id', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------
-// ALTERAÇÃO 3: Envolver a escuta da porta em uma verificação de ambiente
+// ALTERAÇÃO 1: Envolver a escuta da porta em uma verificação de ambiente
 // para não prender o servidor durante a execução dos testes
 // ---------------------------------------------------------------------
 if (process.env.NODE_ENV !== 'test') {
@@ -144,6 +139,6 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // ---------------------------------------------------------------------
-// ALTERAÇÃO 4: Exportação da instância do Express para import no Jest/Supertest
+// ALTERAÇÃO 2: Exportação da instância do Express para import no Jest/Supertest
 // ---------------------------------------------------------------------
 module.exports = app;
